@@ -23,20 +23,35 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if message.channel.id == 1250762525356855396:
-        prompt = message.content
-        if prompt == '$start':
-            await message.author.send('Hello! I am Neuron, a helpful assistant made by Neuralize Club to help users with Python and AI/ML.')
-            await message.delete()
+    # Log incoming messages to help debugging
+    print(f"Message from {message.author} in {message.channel}: {message.content}")
 
-    temp = await message.author.send("I am thinking...")
+    # Handle commands
+    if message.content.startswith('$start'):
+        # Respond in the channel so the user sees it
+        await message.channel.send(f'Hello {message.author.mention}! I am Neuron, a helpful assistant made by Neuralize Club to help users with Python and AI/ML.')
+        # Also send a DM if that was the original intention
+        await message.author.send('Hello! I am ready to help you with Python and AI/ML. You can ask me questions here or in the server.')
+        
+        try:
+            await message.delete()
+        except:
+            pass
+        return
+
+    # For general messages, process with AI model
+    # Note: You might want to restrict this to specific channels or DMs
+    temp = await message.channel.send("I am thinking...")
     response = n.neuron(message.content)
-    if len(response) > 2000:
+    
+    if isinstance(response, Exception):
+        await message.channel.send(f"An error occurred: {str(response)}")
+    elif len(response) > 2000:
         chunks = [response[i:i+2000] for i in range(0, len(response), 2000)]
         for chunk in chunks:
-            await message.author.send(chunk)
+            await message.channel.send(chunk)
     else:
-        await message.author.send(response)
+        await message.channel.send(response)
 
     await temp.delete()
 
